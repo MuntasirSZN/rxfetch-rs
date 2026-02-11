@@ -162,7 +162,7 @@ fn is_known_shell(name: &str) -> bool {
 pub fn memory(sys: &System) -> String {
     let total_mb = sys.total_memory() / 1_048_576;
     let used_mb = sys.used_memory() / 1_048_576;
-    format!("{} / {} MB", used_mb, total_mb)
+    format!(" {} / {} MB", used_mb, total_mb)
 }
 
 // ─── Uptime ──────────────────────────────────────────────────────────
