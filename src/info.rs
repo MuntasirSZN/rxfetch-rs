@@ -31,13 +31,13 @@ pub fn distro_name(platform: &Platform) -> String {
     match platform {
         Platform::Android => {
             // Try to get architecture from uname
-            let arch = std::process::Command::new("uname")
+            let machine_arch = std::process::Command::new("uname")
                 .arg("-m")
                 .output()
                 .ok()
                 .and_then(|o| String::from_utf8(o.stdout).ok())
                 .map_or_else(|| arch().to_string(), |s| s.trim().to_string());
-            format!("Android {arch}")
+            format!("Android {machine_arch}")
         }
         Platform::MacOS => {
             // sysinfo gives us os name + version

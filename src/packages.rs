@@ -86,7 +86,7 @@ fn count_dpkg(platform: &Platform) -> Option<u32> {
     };
 
     // For Android/Termux, also try $PREFIX/var/lib/dpkg/info
-    let prefix_path: Option<PathBuf> = if *platform == Platform::Android {
+    let prefix_path: Option<PathBuf> = if matches!(platform, Platform::Android) {
         env::var("PREFIX")
             .ok()
             .map(|p| PathBuf::from(p).join("var/lib/dpkg/info"))
@@ -101,9 +101,9 @@ fn count_dpkg(platform: &Platform) -> Option<u32> {
                 let c = entries
                     .filter_map(|e| e.ok())
                     .filter(|e| {
-                        let n = e.file_name();
-                        let n = n.to_string_lossy();
-                        n.ends_with(".list") && !n.contains(':') // skip :arch dupes
+                        let file_name = e.file_name();
+                        let file_name_str = file_name.to_string_lossy();
+                        file_name_str.ends_with(".list") && !file_name_str.contains(':') // skip :arch dupes
                     })
                     .count();
                 return Some(c as u32);
@@ -118,9 +118,9 @@ fn count_dpkg(platform: &Platform) -> Option<u32> {
                 .ok()?
                 .filter_map(|e| e.ok())
                 .filter(|e| {
-                    let n = e.file_name();
-                    let n = n.to_string_lossy();
-                    n.ends_with(".list") && !n.contains(':') // skip :arch dupes
+                    let file_name = e.file_name();
+                    let file_name_str = file_name.to_string_lossy();
+                    file_name_str.ends_with(".list") && !file_name_str.contains(':') // skip :arch dupes
                 })
                 .count();
             return Some(c as u32);
