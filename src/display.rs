@@ -69,7 +69,7 @@ fn ascii_line(row: usize, no_color: bool) -> String {
             "|".on_black().bold(),
         ),
         3 => format!(
-            "    {}{}{}{}      ",
+            "    {}{}{}{}       ",
             "/".on_black().bold(),
             " ".on_white().bold(),
             "'".on_black().bold(),
@@ -132,7 +132,7 @@ pub fn render(args: &Args, platform: &Platform, sys: &System) {
 
     art_line(1, "pkgs", &info::package_info(platform), nc, Color::Cyan);
     art_line(2, "sh", &info::shell(), nc, Color::Blue);
-    art_line(3, " ram", &info::memory(sys), nc, Color::Yellow);
+    art_line(3, "ram", &info::memory(sys), nc, Color::Yellow);
     art_line(4, "init", &info::init_system(platform), nc, Color::Magenta);
 
     if Platform::has_display() {
