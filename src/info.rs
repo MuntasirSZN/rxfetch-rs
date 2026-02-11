@@ -54,12 +54,12 @@ pub fn distro_name(platform: &Platform) -> String {
             }
             // sysinfo fallback
             let name = System::name().unwrap_or_else(|| "Linux".into());
-            let ver = System::os_version().unwrap_or_else(|| String::new());
+            let ver = System::os_version().unwrap_or_default();
             format!("{} {}", name, ver).trim().to_string()
         }
         Platform::Windows => {
             let name = System::name().unwrap_or_else(|| "Windows".into());
-            let ver = System::os_version().unwrap_or_else(|| String::new());
+            let ver = System::os_version().unwrap_or_default();
             format!("{} {}", name, ver).trim().to_string()
         }
         Platform::Unsupported => "Unknown OS".into(),
@@ -110,12 +110,11 @@ pub fn init_system(platform: &Platform) -> String {
 
 pub fn shell() -> String {
     // $SHELL is the login shell
-    if let Ok(sh) = env::var("SHELL") {
-        if let Some(name) = sh.rsplit('/').next() {
-            if !name.is_empty() {
-                return name.to_string();
-            }
-        }
+    if let Ok(sh) = env::var("SHELL")
+        && let Some(name) = sh.rsplit('/').next()
+        && !name.is_empty()
+    {
+        return name.to_string();
     }
 
     // Walk the process tree via sysinfo
@@ -181,7 +180,7 @@ pub fn uptime() -> String {
         .ok()
         .and_then(|c| c.split_whitespace().next()?.parse::<f64>().ok())
         .map(|f| f as u64)
-        .unwrap_or_else(|| System::uptime());
+        .unwrap_or_else(System::uptime);
 
     let d = secs / 86400;
     let h = (secs % 86400) / 3600;

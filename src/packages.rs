@@ -95,20 +95,19 @@ fn count_dpkg(platform: &Platform) -> Option<u32> {
     };
 
     // Try $PREFIX path first if it exists
-    if let Some(ref pp) = prefix_path {
-        if pp.exists() {
-            if let Ok(entries) = fs::read_dir(pp) {
-                let c = entries
-                    .filter_map(|e| e.ok())
-                    .filter(|e| {
-                        let file_name = e.file_name();
-                        let file_name_str = file_name.to_string_lossy();
-                        file_name_str.ends_with(".list") && !file_name_str.contains(':') // skip :arch dupes
-                    })
-                    .count();
-                return Some(c as u32);
-            }
-        }
+    if let Some(ref pp) = prefix_path
+        && pp.exists()
+        && let Ok(entries) = fs::read_dir(pp)
+    {
+        let c = entries
+            .filter_map(|e| e.ok())
+            .filter(|e| {
+                let file_name = e.file_name();
+                let file_name_str = file_name.to_string_lossy();
+                file_name_str.ends_with(".list") && !file_name_str.contains(':') // skip :arch dupes
+            })
+            .count();
+        return Some(c as u32);
     }
 
     for p in paths {
@@ -220,10 +219,10 @@ fn count_nix() -> Option<u32> {
     for entry in fs::read_dir(&bin).ok()?.flatten() {
         if let Ok(target) = fs::read_link(entry.path()) {
             let s = target.to_string_lossy().to_string();
-            if let Some(rest) = s.strip_prefix("/nix/store/") {
-                if let Some(derivation) = rest.split('/').next() {
-                    store_paths.insert(derivation.to_string());
-                }
+            if let Some(rest) = s.strip_prefix("/nix/store/")
+                && let Some(derivation) = rest.split('/').next()
+            {
+                store_paths.insert(derivation.to_string());
             }
         }
     }
@@ -255,10 +254,10 @@ fn count_flatpak() -> Option<u32> {
     if sys_ok {
         c += count_subdirs(sys_dir, &[]);
     }
-    if let Some(ref ud) = user_dir {
-        if usr_ok {
-            c += count_subdirs(ud, &[]);
-        }
+    if let Some(ref ud) = user_dir
+        && usr_ok
+    {
+        c += count_subdirs(ud, &[]);
     }
     Some(c)
 }

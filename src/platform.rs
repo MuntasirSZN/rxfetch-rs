@@ -1,6 +1,3 @@
-use std::env;
-use std::path::Path;
-
 /// Every platform we know how to handle.
 /// The `Unsupported` variant is the fallback for anything sysinfo
 /// cannot instrument.
@@ -24,7 +21,7 @@ impl Platform {
         // Android detection: target_os = "android" OR Termux prefix or /system/build.prop
         #[cfg(target_os = "android")]
         {
-            return Self::Android;
+            Self::Android
         }
 
         #[cfg(not(target_os = "android"))]
