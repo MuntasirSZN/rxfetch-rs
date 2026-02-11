@@ -1,7 +1,11 @@
+use std::env;
+use std::path::Path;
+
 /// Every platform we know how to handle.
 /// The `Unsupported` variant is the fallback for anything sysinfo
 /// cannot instrument.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)]
 pub enum Platform {
     Linux,
     Android,

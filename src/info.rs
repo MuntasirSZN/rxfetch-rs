@@ -4,6 +4,7 @@ use nix::sys::statvfs::statvfs;
 use std::env;
 use std::fs;
 use std::path::Path;
+use std::process::Command;
 use sysinfo::{Disks, System};
 
 // ─── Kernel release ──────────────────────────────────────────────────
@@ -25,14 +26,20 @@ pub fn arch() -> &'static str {
     env::consts::ARCH
 }
 
-// Get Linux-style architecture name (e.g., "armv8l" instead of "aarch64")
-pub fn linux_arch() -> &'static str {
+// Get Linux-style architecture name using uname
+pub fn linux_arch() -> String {
+    // Try using uname crate for cross-platform uname support
+    if let Ok(info) = uname::uname() {
+        return info.machine;
+    }
+
+    // Fallback to mapping Rust's arch constants if uname fails
     match env::consts::ARCH {
-        "aarch64" => "armv8l",
-        "x86_64" => "x86_64",
-        "x86" => "i686",
-        "arm" => "armv7l",
-        arch => arch,
+        "aarch64" => "armv8l".to_string(),
+        "x86_64" => "x86_64".to_string(),
+        "x86" => "i686".to_string(),
+        "arm" => "armv7l".to_string(),
+        arch => arch.to_string(),
     }
 }
 
@@ -329,25 +336,36 @@ pub fn package_info(platform: &Platform) -> String {
 // ─── Android props ───────────────────────────────────────────────────
 
 pub fn android_phone() -> String {
-    // Try multiple property keys for brand
-    let brand = read_prop("/system/build.prop", "ro.product.brand")
+    // Try using getprop command first (more reliable on Android)
+    let brand = get_prop_cmd("ro.product.brand")
+        .or_else(|| get_prop_cmd("ro.product.system.brand"))
+        .or_else(|| get_prop_cmd("ro.product.vendor.brand"))
+        .or_else(|| read_prop("/system/build.prop", "ro.product.brand"))
         .or_else(|| read_prop("/system/build.prop", "ro.product.system.brand"))
-        .or_else(|| read_prop("/system/build.prop", "ro.product.vendor.brand"))
-        .or_else(|| read_prop("/system/build.prop", "ro.product.odm.brand"))
         .or_else(|| read_prop("/vendor/build.prop", "ro.product.brand"))
-        .or_else(|| read_prop("/vendor/build.prop", "ro.product.vendor.brand"))
         .unwrap_or_else(|| "Unknown".into());
 
     // Try multiple property keys for model
-    let model = read_prop("/system/build.prop", "ro.product.model")
+    let model = get_prop_cmd("ro.product.model")
+        .or_else(|| get_prop_cmd("ro.product.system.model"))
+        .or_else(|| get_prop_cmd("ro.product.vendor.model"))
+        .or_else(|| read_prop("/system/build.prop", "ro.product.model"))
         .or_else(|| read_prop("/system/build.prop", "ro.product.system.model"))
-        .or_else(|| read_prop("/system/build.prop", "ro.product.vendor.model"))
-        .or_else(|| read_prop("/system/build.prop", "ro.product.odm.model"))
         .or_else(|| read_prop("/vendor/build.prop", "ro.product.model"))
-        .or_else(|| read_prop("/vendor/build.prop", "ro.product.vendor.model"))
         .unwrap_or_else(|| "Device".into());
 
     format!("{} {}", brand, model)
+}
+
+// Get Android property using getprop command
+fn get_prop_cmd(key: &str) -> Option<String> {
+    Command::new("getprop")
+        .arg(key)
+        .output()
+        .ok()
+        .and_then(|output| String::from_utf8(output.stdout).ok())
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────

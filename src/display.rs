@@ -119,7 +119,7 @@ pub fn render(args: &Args, platform: &Platform, sys: &System) {
     let os_arch = if *platform == Platform::Android {
         info::linux_arch()
     } else {
-        info::arch()
+        info::arch().to_string()
     };
 
     info_line(
