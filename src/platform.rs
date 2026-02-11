@@ -21,8 +21,14 @@ impl Platform {
     /// Android detection is performed before checking `sysinfo::IS_SUPPORTED_SYSTEM`
     /// because sysinfo may not fully support Android but we can still detect it.
     pub fn detect() -> Self {
-        // Android detection: Termux prefix or /system/build.prop
-        if cfg!(target_os = "linux") {
+        // Android detection: target_os = "android" OR Termux prefix or /system/build.prop
+        #[cfg(target_os = "android")]
+        {
+            return Self::Android;
+        }
+
+        #[cfg(target_os = "linux")]
+        {
             let is_android = Path::new("/system/build.prop").exists()
                 || env::var("PREFIX")
                     .unwrap_or_default()
