@@ -1,3 +1,6 @@
+use std::env;
+use std::path::Path;
+
 /// Every platform we know how to handle.
 /// The `Unsupported` variant is the fallback for anything sysinfo
 /// cannot instrument.
@@ -24,35 +27,38 @@ impl Platform {
             return Self::Android;
         }
 
-        #[cfg(target_os = "linux")]
+        #[cfg(not(target_os = "android"))]
         {
-            let is_android = Path::new("/system/build.prop").exists()
-                || env::var("PREFIX")
-                    .unwrap_or_default()
-                    .contains("com.termux");
-            if is_android {
-                return Self::Android;
+            #[cfg(target_os = "linux")]
+            {
+                let is_android = Path::new("/system/build.prop").exists()
+                    || env::var("PREFIX")
+                        .unwrap_or_default()
+                        .contains("com.termux");
+                if is_android {
+                    return Self::Android;
+                }
             }
-        }
 
-        if !sysinfo::IS_SUPPORTED_SYSTEM {
-            return Self::Unsupported;
-        }
+            if !sysinfo::IS_SUPPORTED_SYSTEM {
+                return Self::Unsupported;
+            }
 
-        if cfg!(target_os = "macos") {
-            return Self::MacOS;
-        }
-        if cfg!(target_os = "freebsd") {
-            return Self::FreeBSD;
-        }
-        if cfg!(target_os = "windows") {
-            return Self::Windows;
-        }
-        if cfg!(target_os = "linux") {
-            return Self::Linux;
-        }
+            if cfg!(target_os = "macos") {
+                return Self::MacOS;
+            }
+            if cfg!(target_os = "freebsd") {
+                return Self::FreeBSD;
+            }
+            if cfg!(target_os = "windows") {
+                return Self::Windows;
+            }
+            if cfg!(target_os = "linux") {
+                return Self::Linux;
+            }
 
-        Self::Unsupported
+            Self::Unsupported
+        }
     }
 
     /// `true` when the platform should show the colour palette strip.

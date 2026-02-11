@@ -25,14 +25,22 @@ pub fn arch() -> &'static str {
     env::consts::ARCH
 }
 
+// Get Linux-style architecture name (e.g., "armv8l" instead of "aarch64")
+pub fn linux_arch() -> &'static str {
+    match env::consts::ARCH {
+        "aarch64" => "armv8l",
+        "x86_64" => "x86_64",
+        "x86" => "i686",
+        "arm" => "armv7l",
+        arch => arch,
+    }
+}
+
 // ─── Distro / OS name ────────────────────────────────────────────────
 
 pub fn distro_name(platform: &Platform) -> String {
     match platform {
-        Platform::Android => {
-            // Use Rust's built-in cross-platform architecture constant
-            format!("Android {}", arch())
-        }
+        Platform::Android => "Android".into(),
         Platform::MacOS => {
             // sysinfo gives us os name + version
             let name = System::name().unwrap_or_else(|| "macOS".into());
@@ -322,12 +330,24 @@ pub fn package_info(platform: &Platform) -> String {
 // ─── Android props ───────────────────────────────────────────────────
 
 pub fn android_phone() -> String {
+    // Try multiple property keys for brand
     let brand = read_prop("/system/build.prop", "ro.product.brand")
         .or_else(|| read_prop("/system/build.prop", "ro.product.system.brand"))
-        .unwrap_or_else(|| "?".into());
+        .or_else(|| read_prop("/system/build.prop", "ro.product.vendor.brand"))
+        .or_else(|| read_prop("/system/build.prop", "ro.product.odm.brand"))
+        .or_else(|| read_prop("/vendor/build.prop", "ro.product.brand"))
+        .or_else(|| read_prop("/vendor/build.prop", "ro.product.vendor.brand"))
+        .unwrap_or_else(|| "Unknown".into());
+
+    // Try multiple property keys for model
     let model = read_prop("/system/build.prop", "ro.product.model")
         .or_else(|| read_prop("/system/build.prop", "ro.product.system.model"))
-        .unwrap_or_else(|| "?".into());
+        .or_else(|| read_prop("/system/build.prop", "ro.product.vendor.model"))
+        .or_else(|| read_prop("/system/build.prop", "ro.product.odm.model"))
+        .or_else(|| read_prop("/vendor/build.prop", "ro.product.model"))
+        .or_else(|| read_prop("/vendor/build.prop", "ro.product.vendor.model"))
+        .unwrap_or_else(|| "Device".into());
+
     format!("{} {}", brand, model)
 }
 
