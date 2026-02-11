@@ -69,7 +69,7 @@ fn ascii_line(row: usize, no_color: bool) -> String {
             "|".on_black().bold(),
         ),
         3 => format!(
-            "    {}{}{}{}      ",
+            "    {}{}{}{}       ",
             "/".on_black().bold(),
             " ".on_white().bold(),
             "'".on_black().bold(),
