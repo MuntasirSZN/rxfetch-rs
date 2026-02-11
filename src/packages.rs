@@ -85,6 +85,31 @@ fn count_dpkg(platform: &Platform) -> Option<u32> {
         _ => &["/var/lib/dpkg/info"],
     };
 
+    // For Android/Termux, also try $PREFIX/var/lib/dpkg/info
+    let prefix_path: Option<PathBuf> = if matches!(platform, Platform::Android) {
+        env::var("PREFIX")
+            .ok()
+            .map(|p| PathBuf::from(p).join("var/lib/dpkg/info"))
+    } else {
+        None
+    };
+
+    // Try $PREFIX path first if it exists
+    if let Some(ref pp) = prefix_path
+        && pp.exists()
+        && let Ok(entries) = fs::read_dir(pp)
+    {
+        let c = entries
+            .filter_map(|e| e.ok())
+            .filter(|e| {
+                let file_name = e.file_name();
+                let file_name_str = file_name.to_string_lossy();
+                file_name_str.ends_with(".list") && !file_name_str.contains(':') // skip :arch dupes
+            })
+            .count();
+        return Some(c as u32);
+    }
+
     for p in paths {
         let dir = Path::new(p);
         if dir.exists() {
@@ -92,9 +117,9 @@ fn count_dpkg(platform: &Platform) -> Option<u32> {
                 .ok()?
                 .filter_map(|e| e.ok())
                 .filter(|e| {
-                    let n = e.file_name();
-                    let n = n.to_string_lossy();
-                    n.ends_with(".list") && !n.contains(':') // skip :arch dupes
+                    let file_name = e.file_name();
+                    let file_name_str = file_name.to_string_lossy();
+                    file_name_str.ends_with(".list") && !file_name_str.contains(':') // skip :arch dupes
                 })
                 .count();
             return Some(c as u32);
@@ -194,10 +219,10 @@ fn count_nix() -> Option<u32> {
     for entry in fs::read_dir(&bin).ok()?.flatten() {
         if let Ok(target) = fs::read_link(entry.path()) {
             let s = target.to_string_lossy().to_string();
-            if let Some(rest) = s.strip_prefix("/nix/store/") {
-                if let Some(derivation) = rest.split('/').next() {
-                    store_paths.insert(derivation.to_string());
-                }
+            if let Some(rest) = s.strip_prefix("/nix/store/")
+                && let Some(derivation) = rest.split('/').next()
+            {
+                store_paths.insert(derivation.to_string());
             }
         }
     }
@@ -229,10 +254,10 @@ fn count_flatpak() -> Option<u32> {
     if sys_ok {
         c += count_subdirs(sys_dir, &[]);
     }
-    if let Some(ref ud) = user_dir {
-        if usr_ok {
-            c += count_subdirs(ud, &[]);
-        }
+    if let Some(ref ud) = user_dir
+        && usr_ok
+    {
+        c += count_subdirs(ud, &[]);
     }
     Some(c)
 }

@@ -69,7 +69,7 @@ fn ascii_line(row: usize, no_color: bool) -> String {
             "|".on_black().bold(),
         ),
         3 => format!(
-            "    {}{}{}{}      ",
+            "    {}{}{}{}       ",
             "/".on_black().bold(),
             " ".on_white().bold(),
             "'".on_black().bold(),
@@ -116,9 +116,15 @@ pub fn render(args: &Args, platform: &Platform, sys: &System) {
         info_line("phone", &info::android_phone(), nc, Color::Red);
     }
 
+    let os_arch = if *platform == Platform::Android {
+        info::linux_arch()
+    } else {
+        info::arch().to_string()
+    };
+
     info_line(
         "os",
-        &format!("{} {}", info::distro_name(platform), info::arch()),
+        &format!("{} {}", info::distro_name(platform), os_arch),
         nc,
         Color::Magenta,
     );
