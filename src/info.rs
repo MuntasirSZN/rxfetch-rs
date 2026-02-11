@@ -206,9 +206,9 @@ pub fn storage(platform: &Platform) -> String {
 
     // Primary: nix statvfs (POSIX, no shell-out)
     if let Ok(st) = statvfs(mount) {
-        let bsize = st.block_size();
-        let total = st.blocks().saturating_mul(bsize);
-        let avail = st.blocks_available().saturating_mul(bsize);
+        let bsize = u64::from(st.block_size());
+        let total = u64::from(st.blocks()).saturating_mul(bsize);
+        let avail = u64::from(st.blocks_available()).saturating_mul(bsize);
         let used = total.saturating_sub(avail);
         return format_bytes_pair(used, total);
     }
