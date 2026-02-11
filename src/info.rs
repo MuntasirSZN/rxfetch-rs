@@ -30,9 +30,14 @@ pub fn arch() -> &'static str {
 pub fn distro_name(platform: &Platform) -> String {
     match platform {
         Platform::Android => {
-            let ver = read_prop("/system/build.prop", "ro.build.version.release")
-                .unwrap_or_else(|| "unknown".into());
-            format!("Android {}", ver)
+            // Try to get architecture from uname
+            let arch = std::process::Command::new("uname")
+                .arg("-m")
+                .output()
+                .ok()
+                .and_then(|o| String::from_utf8(o.stdout).ok())
+                .map_or_else(|| arch().to_string(), |s| s.trim().to_string());
+            format!("Android {arch}")
         }
         Platform::MacOS => {
             // sysinfo gives us os name + version
@@ -207,11 +212,11 @@ pub fn storage(platform: &Platform) -> String {
 
     // Primary: nix statvfs (POSIX, no shell-out)
     if let Ok(st) = statvfs(mount) {
-        let bsize = st.block_size() as u32;
-        let total = st.blocks() * bsize;
-        let avail = st.blocks_available() * bsize;
-        let used = total - avail;
-        return format_bytes_pair(used.into(), total.into());
+        let bsize = st.block_size();
+        let total = st.blocks().saturating_mul(bsize);
+        let avail = st.blocks_available().saturating_mul(bsize);
+        let used = total.saturating_sub(avail);
+        return format_bytes_pair(used, total);
     }
 
     // Fallback: sysinfo Disks

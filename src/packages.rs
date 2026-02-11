@@ -85,6 +85,32 @@ fn count_dpkg(platform: &Platform) -> Option<u32> {
         _ => &["/var/lib/dpkg/info"],
     };
 
+    // For Android/Termux, also try $PREFIX/var/lib/dpkg/info
+    let prefix_path: Option<PathBuf> = if *platform == Platform::Android {
+        env::var("PREFIX")
+            .ok()
+            .map(|p| PathBuf::from(p).join("var/lib/dpkg/info"))
+    } else {
+        None
+    };
+
+    // Try $PREFIX path first if it exists
+    if let Some(ref pp) = prefix_path {
+        if pp.exists() {
+            if let Ok(entries) = fs::read_dir(pp) {
+                let c = entries
+                    .filter_map(|e| e.ok())
+                    .filter(|e| {
+                        let n = e.file_name();
+                        let n = n.to_string_lossy();
+                        n.ends_with(".list") && !n.contains(':') // skip :arch dupes
+                    })
+                    .count();
+                return Some(c as u32);
+            }
+        }
+    }
+
     for p in paths {
         let dir = Path::new(p);
         if dir.exists() {

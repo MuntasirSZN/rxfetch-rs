@@ -18,13 +18,9 @@ impl Platform {
     /// Detect the current platform at runtime.
     ///
     /// Android is checked first because it also reports `target_os = "linux"`.
-    /// When `sysinfo::IS_SUPPORTED_SYSTEM` is `false` we always return
-    /// `Unsupported` so the rest of the code can degrade gracefully.
+    /// Android detection is performed before checking `sysinfo::IS_SUPPORTED_SYSTEM`
+    /// because sysinfo may not fully support Android but we can still detect it.
     pub fn detect() -> Self {
-        if !sysinfo::IS_SUPPORTED_SYSTEM {
-            return Self::Unsupported;
-        }
-
         // Android detection: Termux prefix or /system/build.prop
         if cfg!(target_os = "linux") {
             let is_android = Path::new("/system/build.prop").exists()
@@ -34,6 +30,10 @@ impl Platform {
             if is_android {
                 return Self::Android;
             }
+        }
+
+        if !sysinfo::IS_SUPPORTED_SYSTEM {
+            return Self::Unsupported;
         }
 
         if cfg!(target_os = "macos") {
