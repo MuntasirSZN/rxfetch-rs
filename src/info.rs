@@ -212,6 +212,7 @@ fn plural(n: u64) -> &'static str {
 
 // ─── Storage ─────────────────────────────────────────────────────────
 
+#[allow(clippy::useless_conversion)] // statvfs returns u32 on Android but u64 on other platforms
 pub fn storage(platform: &Platform) -> String {
     let mount = match platform {
         Platform::Android => "/data",
