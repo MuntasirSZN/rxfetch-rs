@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  clippy-build-run:
+    name: Clippy, Build & Run
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            run-tests: true
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            run-tests: false
+          
+          # macOS
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            run-tests: true
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            run-tests: true
+          
+          # Windows
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            run-tests: true
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            run-tests: false
+          
+          # iOS
+          - os: macos-latest
+            target: aarch64-apple-ios
+            run-tests: false
+          
+          # Android
+          - os: ubuntu-latest
+            target: aarch64-linux-android
+            run-tests: false
+          - os: ubuntu-latest
+            target: armv7-linux-androideabi
+            run-tests: false
+          
+          # BSD
+          - os: ubuntu-latest
+            target: x86_64-unknown-freebsd
+            run-tests: false
+          - os: ubuntu-latest
+            target: x86_64-unknown-netbsd
+            run-tests: false
+          
+          # Raspberry Pi
+          - os: ubuntu-latest
+            target: armv7-unknown-linux-gnueabihf
+            run-tests: false
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            run-tests: false
+            name-suffix: " (Raspberry Pi)"
+
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+          components: clippy
+      
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+      
+      - name: Install cross-compilation tools (Linux ARM)
+        if: matrix.os == 'ubuntu-latest' && contains(matrix.target, 'aarch64-unknown-linux')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+      
+      - name: Install cross-compilation tools (Linux ARMv7)
+        if: matrix.os == 'ubuntu-latest' && contains(matrix.target, 'armv7-unknown-linux')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-linux-gnueabihf
+      
+      - name: Install cross-compilation tools (Android)
+        if: contains(matrix.target, 'android')
+        run: |
+          # Android NDK is pre-installed on GitHub Actions runners
+          echo "ANDROID_NDK_HOME=$ANDROID_NDK_LATEST_HOME" >> $GITHUB_ENV
+      
+      - name: Run Clippy (native targets)
+        if: matrix.run-tests
+        run: cargo clippy --target ${{ matrix.target }} -- -D warnings
+      
+      - name: Build
+        run: cargo build --target ${{ matrix.target }} --verbose
+      
+      - name: Run tests
+        if: matrix.run-tests
+        run: cargo test --target ${{ matrix.target }} --verbose
+      
+      - name: Run binary (native targets)
+        if: matrix.run-tests && matrix.os != 'windows-latest'
+        run: ./target/${{ matrix.target }}/debug/rxfetch --help
+      
+      - name: Run binary (Windows)
+        if: matrix.run-tests && matrix.os == 'windows-latest'
+        run: .\target\${{ matrix.target }}\debug\rxfetch.exe --help

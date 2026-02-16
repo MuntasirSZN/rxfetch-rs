@@ -1,0 +1,22 @@
+name: Cargo Deny
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    # Run weekly to check for new advisories
+    - cron: '0 0 * * 0'
+
+jobs:
+  cargo-deny:
+    name: Cargo Deny Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Cargo Deny
+        uses: EmbarkStudios/cargo-deny-action@v2
