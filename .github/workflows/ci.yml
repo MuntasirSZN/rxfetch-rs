@@ -17,12 +17,12 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             run-tests: true
-          - os: ubuntu-latest
+          - os: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
             run-tests: false
           
           # macOS
-          - os: macos-latest
+          - os: macos-15-xlarge
             target: x86_64-apple-darwin
             run-tests: true
           - os: macos-latest
@@ -33,7 +33,7 @@ jobs:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             run-tests: true
-          - os: windows-latest
+          - os: windows-11-arm
             target: aarch64-pc-windows-msvc
             run-tests: false
           
@@ -67,16 +67,16 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # actions/checkout@v4
       
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
           components: clippy
       
       - name: Setup Rust cache
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@ad397744b0d591a723ab90405b7247fac0e6b8db # Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.target }}
       

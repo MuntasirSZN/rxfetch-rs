@@ -13,12 +13,12 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # actions/checkout@v4
         with:
           persist-credentials: false
       
       - name: Run zizmor
-        uses: woodruffw/zizmor-action@v1
+        uses: zizmorcore/zizmor-action@v1
         with:
           # Use online mode for up-to-date checks
           online: true

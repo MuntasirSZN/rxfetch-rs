@@ -21,16 +21,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'rust', 'javascript-typescript' ]
-        # CodeQL supports: c-cpp, csharp, go, java-kotlin, javascript-typescript, python, ruby, swift
-        # Note: 'javascript-typescript' is used to scan GitHub Actions workflows
+        language: [ 'rust', 'actions' ]
+        # CodeQL supports: c-cpp, csharp, go, java-kotlin, javascript-typescript, python, ruby, swift, actions
+        # Note: 'actions' is used to scan GitHub Actions workflows
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # actions/checkout@v4
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@60d8f0d1f1f8c8d07ef53bd027032705d414ec28 # github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
           # If you wish to specify custom queries, you can do so here or in a config file.
@@ -41,14 +41,13 @@ jobs:
 
       - name: Install Rust toolchain
         if: matrix.language == 'rust'
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # dtolnay/rust-toolchain@stable
 
-      # Autobuild attempts to build any compiled languages (C/C++, C#, Go, Java, or Swift).
-      # If this step fails, then you should remove it and run the build manually
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+      - name: Build Rust code
+        if: matrix.language == 'rust'
+        run: cargo build --verbose
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@60d8f0d1f1f8c8d07ef53bd027032705d414ec28 # github/codeql-action/analyze@v3
         with:
           category: "/language:${{matrix.language}}"
