@@ -11,11 +11,9 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
       
       - name: Check commit messages
-        uses: crate-ci/committed@9e0a7f6a4db9fdcc1e0b9277eafff2b699413823 # crate-ci/committed@v1.0.20
-        with:
-          args: HEAD~..HEAD
+        uses: crate-ci/committed@dc6f20ddd899fe6d6f0402807884c0a4b3176b53 # v1.1.10
