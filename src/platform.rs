@@ -1,4 +1,6 @@
+#[cfg(target_os = "linux")]
 use std::env;
+#[cfg(target_os = "linux")]
 use std::path::Path;
 
 /// Every platform we know how to handle.
