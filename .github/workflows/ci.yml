@@ -13,105 +13,82 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Linux
+          # Linux x86_64 (native)
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            run-tests: true
-          - os: ubuntu-24.04-arm
-            target: aarch64-unknown-linux-gnu
-            run-tests: false
           
-          # macOS
-          - os: macos-15-intel
+          # Linux ARM64
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+          
+          # Linux ARMv7 (Raspberry Pi)
+          - os: ubuntu-latest
+            target: armv7-unknown-linux-gnueabihf
+          
+          # macOS Intel
+          - os: macos-15-xlarge
             target: x86_64-apple-darwin
-            run-tests: true
+          
+          # macOS Apple Silicon
           - os: macos-latest
             target: aarch64-apple-darwin
-            run-tests: true
-          
-          # Windows
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            run-tests: true
-          - os: windows-11-arm
-            target: aarch64-pc-windows-msvc
-            run-tests: false
           
           # iOS
           - os: macos-latest
             target: aarch64-apple-ios
-            run-tests: false
           
-          # Android
+          # Windows x86_64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+          
+          # Windows ARM64
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+          
+          # Android aarch64
           - os: ubuntu-latest
             target: aarch64-linux-android
-            run-tests: false
+          
+          # Android armv7
           - os: ubuntu-latest
             target: armv7-linux-androideabi
-            run-tests: false
           
-          # BSD
+          # FreeBSD
           - os: ubuntu-latest
             target: x86_64-unknown-freebsd
-            run-tests: false
+          
+          # NetBSD
           - os: ubuntu-latest
             target: x86_64-unknown-netbsd
-            run-tests: false
-          
-          # Raspberry Pi
-          - os: ubuntu-latest
-            target: armv7-unknown-linux-gnueabihf
-            run-tests: false
 
     runs-on: ${{ matrix.os }}
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@efa25f7f19611383d5b0ccf2d1c8914531636bf9
+        run: rustup update stable && rustup default stable
+      
+      - name: Setup cross-compilation toolchain
+        uses: taiki-e/setup-cross-toolchain-action@b8d1a322a6009a2b7220f53996695778eef89b41 # v1
         with:
-          targets: ${{ matrix.target }}
-          components: clippy
+          target: ${{ matrix.target }}
       
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           key: ${{ matrix.target }}
       
-      - name: Install cross-compilation tools (Linux ARM)
-        if: matrix.os == 'ubuntu-latest' && contains(matrix.target, 'aarch64-unknown-linux')
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu
-      
-      - name: Install cross-compilation tools (Linux ARMv7)
-        if: matrix.os == 'ubuntu-latest' && contains(matrix.target, 'armv7-unknown-linux')
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-arm-linux-gnueabihf
-      
-      - name: Install cross-compilation tools (Android)
-        if: contains(matrix.target, 'android')
-        run: |
-          # Android NDK is pre-installed on GitHub Actions runners
-          echo "ANDROID_NDK_HOME=$ANDROID_NDK_LATEST_HOME" >> $GITHUB_ENV
-      
-      - name: Run Clippy (native targets)
-        if: matrix.run-tests
-        run: cargo clippy --target ${{ matrix.target }} -- -D warnings
+      - name: Run Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
       
       - name: Build
-        run: cargo build --target ${{ matrix.target }} --verbose
+        run: cargo build --verbose
       
       - name: Run tests
-        if: matrix.run-tests
-        run: cargo test --target ${{ matrix.target }} --verbose
+        run: cargo test --verbose
       
-      - name: Run binary (native targets)
-        if: matrix.run-tests && matrix.os != 'windows-latest'
-        run: ./target/${{ matrix.target }}/debug/rxfetch --help
-      
-      - name: Run binary (Windows)
-        if: matrix.run-tests && matrix.os == 'windows-latest'
-        run: .\target\${{ matrix.target }}\debug\rxfetch.exe --help
+      - name: Run binary
+        run: cargo run -- --help
+
