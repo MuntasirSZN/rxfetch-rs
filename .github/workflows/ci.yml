@@ -22,7 +22,7 @@ jobs:
             target: aarch64-unknown-linux-gnu
           
           # Linux ARMv7 (Raspberry Pi)
-          - os: ubuntu-latest
+          - os: ubuntu-24.04-arm
             target: armv7-unknown-linux-gnueabihf
           
           # macOS Intel
@@ -42,15 +42,15 @@ jobs:
             target: x86_64-pc-windows-msvc
           
           # Windows ARM64
-          - os: windows-latest
+          - os: windows-11-arm
             target: aarch64-pc-windows-msvc
           
           # Android aarch64
-          - os: ubuntu-latest
+          - os: ubuntu-24.04-arm
             target: aarch64-linux-android
           
           # Android armv7
-          - os: ubuntu-latest
+          - os: ubuntu-24.04-arm
             target: armv7-linux-androideabi
           
           # FreeBSD
