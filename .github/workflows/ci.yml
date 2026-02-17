@@ -18,7 +18,7 @@ jobs:
             target: x86_64-unknown-linux-gnu
           
           # Linux ARM64
-          - os: ubuntu-latest
+          - os: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
           
           # Linux ARMv7 (Raspberry Pi)
