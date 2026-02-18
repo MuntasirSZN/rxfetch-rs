@@ -21,9 +21,45 @@ pub fn kernel_release() -> String {
 
 // ─── Architecture ────────────────────────────────────────────────────
 
+<<<<<<< HEAD
 // Get machine architecture
 pub fn arch() -> String {
     System::cpu_arch()
+=======
+pub fn arch() -> &'static str {
+    env::consts::ARCH
+}
+
+// Get Linux-style architecture name using uname
+#[cfg(unix)]
+pub fn linux_arch() -> String {
+    // Try using uname crate for cross-platform uname support
+    if let Ok(info) = uname::uname() {
+        return info.machine;
+    }
+
+    // Fallback to mapping Rust's arch constants if uname fails
+    match env::consts::ARCH {
+        "aarch64" => "armv8l".to_string(),
+        "x86_64" => "x86_64".to_string(),
+        "x86" => "i686".to_string(),
+        "arm" => "armv7l".to_string(),
+        arch => arch.to_string(),
+    }
+>>>>>>> cab2850 (Make uname dependency Unix-only to fix Windows builds)
+}
+
+// Fallback for non-Unix platforms (e.g., Windows)
+#[cfg(not(unix))]
+pub fn linux_arch() -> String {
+    // Just use Rust's arch constants
+    match env::consts::ARCH {
+        "aarch64" => "armv8l".to_string(),
+        "x86_64" => "x86_64".to_string(),
+        "x86" => "i686".to_string(),
+        "arm" => "armv7l".to_string(),
+        arch => arch.to_string(),
+    }
 }
 
 // ─── Distro / OS name ────────────────────────────────────────────────
