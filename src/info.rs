@@ -1,6 +1,5 @@
 use crate::packages;
 use crate::platform::Platform;
-use nix::sys::statvfs::statvfs;
 use std::env;
 use std::fs;
 use std::path::Path;
@@ -22,18 +21,23 @@ pub fn kernel_release() -> String {
 
 // ─── Architecture ────────────────────────────────────────────────────
 
-pub fn arch() -> &'static str {
-    env::consts::ARCH
-}
-
-// Get machine architecture name
-fn machine() -> String {
+// Get machine architecture name with Linux-style names
+pub fn arch() -> String {
     #[cfg(unix)]
     {
         use rustix::system::uname;
         
         let info = uname();
-        info.machine().to_string_lossy().into_owned()
+        let arch = info.machine().to_string_lossy().into_owned();
+        
+        // Map to Linux-style architecture names
+        match arch.as_str() {
+            "aarch64" => "armv8l".to_string(),
+            "x86_64" => "x86_64".to_string(),
+            "x86" | "i686" => "i686".to_string(),
+            "arm" | "armv7l" => "armv7l".to_string(),
+            other => other.to_string(),
+        }
     }
 
     #[cfg(windows)]
@@ -42,31 +46,28 @@ fn machine() -> String {
             GetNativeSystemInfo, SYSTEM_INFO,
         };
 
-        unsafe {
+        // SAFETY: GetNativeSystemInfo is always safe to call with a valid SYSTEM_INFO pointer.
+        // We're passing a zeroed struct which is valid for this API, and the function will
+        // populate it with the system information.
+        let arch = unsafe {
             let mut info = std::mem::zeroed::<SYSTEM_INFO>();
             GetNativeSystemInfo(&mut info);
 
             match info.Anonymous.Anonymous.wProcessorArchitecture {
-                9 => "x86_64".into(),
-                12 => "aarch64".into(),
-                0 => "x86".into(),
-                _ => "unknown".into(),
+                9 => "x86_64",
+                12 => "aarch64",
+                0 => "x86",
+                _ => "unknown",
             }
+        };
+        
+        // Map to Linux-style architecture names for consistency
+        match arch {
+            "aarch64" => "armv8l".to_string(),
+            "x86_64" => "x86_64".to_string(),
+            "x86" | "i686" => "i686".to_string(),
+            other => other.to_string(),
         }
-    }
-}
-
-// Get Linux-style architecture name
-pub fn linux_arch() -> String {
-    let arch = machine();
-    
-    // Map to Linux-style architecture names
-    match arch.as_str() {
-        "aarch64" => "armv8l".to_string(),
-        "x86_64" => "x86_64".to_string(),
-        "x86" | "i686" => "i686".to_string(),
-        "arm" | "armv7l" => "armv7l".to_string(),
-        other => other.to_string(),
     }
 }
 
@@ -239,20 +240,24 @@ fn plural(n: u64) -> &'static str {
 
 // ─── Storage ─────────────────────────────────────────────────────────
 
-#[allow(clippy::useless_conversion)] // statvfs returns u32 on Android but u64 on other platforms
 pub fn storage(platform: &Platform) -> String {
     let mount = match platform {
         Platform::Android => "/data",
         _ => "/",
     };
 
-    // Primary: nix statvfs (POSIX, no shell-out)
-    if let Ok(st) = statvfs(mount) {
-        let bsize = u64::from(st.block_size());
-        let total = u64::from(st.blocks()).saturating_mul(bsize);
-        let avail = u64::from(st.blocks_available()).saturating_mul(bsize);
-        let used = total.saturating_sub(avail);
-        return format_bytes_pair(used, total);
+    // Primary: rustix statvfs (POSIX, no shell-out)
+    #[cfg(unix)]
+    {
+        use rustix::fs::statvfs;
+        
+        if let Ok(st) = statvfs(mount) {
+            let bsize = st.f_frsize;
+            let total = st.f_blocks.saturating_mul(bsize);
+            let avail = st.f_bavail.saturating_mul(bsize);
+            let used = total.saturating_sub(avail);
+            return format_bytes_pair(used, total);
+        }
     }
 
     // Fallback: sysinfo Disks

@@ -116,11 +116,7 @@ pub fn render(args: &Args, platform: &Platform, sys: &System) {
         info_line("phone", &info::android_phone(), nc, Color::Red);
     }
 
-    let os_arch = if *platform == Platform::Android {
-        info::linux_arch()
-    } else {
-        info::arch().to_string()
-    };
+    let os_arch = info::arch();
 
     info_line(
         "os",
