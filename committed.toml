@@ -11,3 +11,5 @@ allowed_types = [
   "chore",
   "revert",
 ]
+subject_capitalized = false
+merge_commit = false
