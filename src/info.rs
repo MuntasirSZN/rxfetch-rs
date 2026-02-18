@@ -27,6 +27,7 @@ pub fn arch() -> &'static str {
 }
 
 // Get Linux-style architecture name using uname
+#[cfg(unix)]
 pub fn linux_arch() -> String {
     // Try using uname crate for cross-platform uname support
     if let Ok(info) = uname::uname() {
@@ -34,6 +35,19 @@ pub fn linux_arch() -> String {
     }
 
     // Fallback to mapping Rust's arch constants if uname fails
+    match env::consts::ARCH {
+        "aarch64" => "armv8l".to_string(),
+        "x86_64" => "x86_64".to_string(),
+        "x86" => "i686".to_string(),
+        "arm" => "armv7l".to_string(),
+        arch => arch.to_string(),
+    }
+}
+
+// Fallback for non-Unix platforms (e.g., Windows)
+#[cfg(not(unix))]
+pub fn linux_arch() -> String {
+    // Just use Rust's arch constants
     match env::consts::ARCH {
         "aarch64" => "armv8l".to_string(),
         "x86_64" => "x86_64".to_string(),
