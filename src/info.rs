@@ -22,6 +22,7 @@ pub fn kernel_release() -> String {
 // ─── Architecture ────────────────────────────────────────────────────
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 // Get machine architecture
 pub fn arch() -> String {
     System::cpu_arch()
@@ -59,6 +60,55 @@ pub fn linux_arch() -> String {
         "x86" => "i686".to_string(),
         "arm" => "armv7l".to_string(),
         arch => arch.to_string(),
+=======
+// Get machine architecture name with Linux-style names
+pub fn arch() -> String {
+    #[cfg(unix)]
+    {
+        use rustix::system::uname;
+        
+        let info = uname();
+        let arch = info.machine().to_string_lossy().into_owned();
+        
+        // Map to Linux-style architecture names
+        match arch.as_str() {
+            "aarch64" => "armv8l".to_string(),
+            "x86_64" => "x86_64".to_string(),
+            "x86" | "i686" => "i686".to_string(),
+            "arm" | "armv7l" => "armv7l".to_string(),
+            other => other.to_string(),
+        }
+    }
+
+    #[cfg(windows)]
+    {
+        use windows_sys::Win32::System::SystemInformation::{
+            GetNativeSystemInfo, SYSTEM_INFO,
+        };
+
+        // SAFETY: GetNativeSystemInfo is always safe to call with a valid SYSTEM_INFO pointer.
+        // We're passing a zeroed struct which is valid for this API, and the function will
+        // populate it with the system information.
+        let arch = unsafe {
+            let mut info = std::mem::zeroed::<SYSTEM_INFO>();
+            GetNativeSystemInfo(&mut info);
+
+            match info.Anonymous.Anonymous.wProcessorArchitecture {
+                9 => "x86_64",
+                12 => "aarch64",
+                0 => "x86",
+                _ => "unknown",
+            }
+        };
+        
+        // Map to Linux-style architecture names for consistency
+        match arch {
+            "aarch64" => "armv8l".to_string(),
+            "x86_64" => "x86_64".to_string(),
+            "x86" | "i686" => "i686".to_string(),
+            other => other.to_string(),
+        }
+>>>>>>> 11c1b1b (Refactor arch detection: drop nix crate, rename machine to arch, add SAFETY comments)
     }
 }
 
@@ -237,7 +287,25 @@ pub fn storage(platform: &Platform) -> String {
         _ => "/",
     };
 
+<<<<<<< HEAD
     // Use sysinfo Disks for storage information
+=======
+    // Primary: rustix statvfs (POSIX, no shell-out)
+    #[cfg(unix)]
+    {
+        use rustix::fs::statvfs;
+        
+        if let Ok(st) = statvfs(mount) {
+            let bsize = st.f_frsize;
+            let total = st.f_blocks.saturating_mul(bsize);
+            let avail = st.f_bavail.saturating_mul(bsize);
+            let used = total.saturating_sub(avail);
+            return format_bytes_pair(used, total);
+        }
+    }
+
+    // Fallback: sysinfo Disks
+>>>>>>> 11c1b1b (Refactor arch detection: drop nix crate, rename machine to arch, add SAFETY comments)
     let disks = Disks::new_with_refreshed_list();
     for d in disks.list() {
         if d.mount_point() == Path::new(mount) {

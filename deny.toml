@@ -14,11 +14,11 @@ yanked = "deny"
 [licenses]
 # List of explicitly allowed licenses
 allow = [
-    "Unicode-3.0",
-    "MIT",
-    "Apache-2.0",
-    "Apache-2.0 WITH LLVM-exception",
-    "ISC",
+  "Unicode-3.0",
+  "MIT",
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "ISC",
 ]
 # Confidence threshold for detecting a license from license text.
 confidence-threshold = 0.8
