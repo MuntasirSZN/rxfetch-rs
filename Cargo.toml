@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-clap = { version = "4.5.57", features = ["wrap_help", "derive"] }
+clap = { version = "4.5.59", features = ["wrap_help", "derive"] }
 nix = { version = "0.31.1", features = ["fs"] }
 owo-colors = { version = "4.2.3", features = ["alloc", "supports-color"] }
-sysinfo = "0.38.1"
+sysinfo = "0.38.2"
 uname = "0.1.1"
