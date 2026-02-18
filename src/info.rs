@@ -26,34 +26,47 @@ pub fn arch() -> &'static str {
     env::consts::ARCH
 }
 
-// Get Linux-style architecture name using uname
-#[cfg(unix)]
-pub fn linux_arch() -> String {
-    // Try using uname crate for cross-platform uname support
-    if let Ok(info) = uname::uname() {
-        return info.machine;
+// Get machine architecture name
+fn machine() -> String {
+    #[cfg(unix)]
+    {
+        use rustix::system::uname;
+        
+        let info = uname();
+        info.machine().to_string_lossy().into_owned()
     }
 
-    // Fallback to mapping Rust's arch constants if uname fails
-    match env::consts::ARCH {
-        "aarch64" => "armv8l".to_string(),
-        "x86_64" => "x86_64".to_string(),
-        "x86" => "i686".to_string(),
-        "arm" => "armv7l".to_string(),
-        arch => arch.to_string(),
+    #[cfg(windows)]
+    {
+        use windows_sys::Win32::System::SystemInformation::{
+            GetNativeSystemInfo, SYSTEM_INFO,
+        };
+
+        unsafe {
+            let mut info = std::mem::zeroed::<SYSTEM_INFO>();
+            GetNativeSystemInfo(&mut info);
+
+            match info.Anonymous.Anonymous.wProcessorArchitecture {
+                9 => "x86_64".into(),
+                12 => "aarch64".into(),
+                0 => "x86".into(),
+                _ => "unknown".into(),
+            }
+        }
     }
 }
 
-// Fallback for non-Unix platforms (e.g., Windows)
-#[cfg(not(unix))]
+// Get Linux-style architecture name
 pub fn linux_arch() -> String {
-    // Just use Rust's arch constants
-    match env::consts::ARCH {
+    let arch = machine();
+    
+    // Map to Linux-style architecture names
+    match arch.as_str() {
         "aarch64" => "armv8l".to_string(),
         "x86_64" => "x86_64".to_string(),
-        "x86" => "i686".to_string(),
-        "arm" => "armv7l".to_string(),
-        arch => arch.to_string(),
+        "x86" | "i686" => "i686".to_string(),
+        "arm" | "armv7l" => "armv7l".to_string(),
+        other => other.to_string(),
     }
 }
 

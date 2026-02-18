@@ -11,4 +11,7 @@ owo-colors = { version = "4.2.3", features = ["alloc", "supports-color"] }
 sysinfo = "0.38.1"
 
 [target.'cfg(unix)'.dependencies]
-uname = "0.1.1"
+rustix = { version = "0.38.43", features = ["system"] }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59.0", features = ["Win32_System_SystemInformation"] }
