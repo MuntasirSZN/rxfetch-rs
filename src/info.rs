@@ -23,15 +23,15 @@ pub fn kernel_release() -> String {
 
 // Get machine architecture name with Linux-style names
 pub fn arch() -> String {
-    // Use Rust's built-in architecture constant
-    let arch = env::consts::ARCH;
+    // Use sysinfo to get CPU architecture
+    let arch = System::cpu_arch();
     
     // Map to Linux-style architecture names
-    match arch {
+    match arch.as_str() {
         "aarch64" => "armv8l".to_string(),
-        "x86_64" => "x86_64".to_string(),
-        "x86" => "i686".to_string(),
-        "arm" => "armv7l".to_string(),
+        "x86_64" | "amd64" => "x86_64".to_string(),
+        "x86" | "i686" => "i686".to_string(),
+        "arm" | "armv7l" => "armv7l".to_string(),
         other => other.to_string(),
     }
 }
