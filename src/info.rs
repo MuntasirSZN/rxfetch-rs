@@ -21,19 +21,9 @@ pub fn kernel_release() -> String {
 
 // ─── Architecture ────────────────────────────────────────────────────
 
-// Get machine architecture name with Linux-style names
+// Get machine architecture
 pub fn arch() -> String {
-    // Use sysinfo to get CPU architecture
-    let arch = System::cpu_arch();
-    
-    // Map to Linux-style architecture names
-    match arch.as_str() {
-        "aarch64" => "armv8l".to_string(),
-        "x86_64" | "amd64" => "x86_64".to_string(),
-        "x86" | "i686" => "i686".to_string(),
-        "arm" | "armv7l" => "armv7l".to_string(),
-        other => other.to_string(),
-    }
+    System::cpu_arch()
 }
 
 // ─── Distro / OS name ────────────────────────────────────────────────
