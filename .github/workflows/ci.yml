@@ -33,10 +33,14 @@ jobs:
           - os: macos-latest
             target: aarch64-apple-darwin
           
-          # iOS
+          # iOS (aarch64)
           - os: macos-latest
-            target: aarch64-apple-ios
-          
+            target: aarch64-apple-ios-macabi
+
+          # iOS (x86_64)
+          - os: macos-15-intel
+            target: x86_64-apple-ios-macabi
+ 
           # Windows x86_64
           - os: windows-latest
             target: x86_64-pc-windows-msvc
@@ -46,11 +50,11 @@ jobs:
             target: aarch64-pc-windows-msvc
           
           # Android aarch64
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-latest
             target: aarch64-linux-android
           
           # Android armv7
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-latest
             target: armv7-linux-androideabi
           
           # FreeBSD
