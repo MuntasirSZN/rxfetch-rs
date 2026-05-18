@@ -1,6 +1,5 @@
 use crate::packages;
 use crate::platform::Platform;
-use nix::sys::statvfs::statvfs;
 use std::env;
 use std::fs;
 use std::path::Path;
@@ -22,25 +21,9 @@ pub fn kernel_release() -> String {
 
 // ─── Architecture ────────────────────────────────────────────────────
 
-pub fn arch() -> &'static str {
-    env::consts::ARCH
-}
-
-// Get Linux-style architecture name using uname
-pub fn linux_arch() -> String {
-    // Try using uname crate for cross-platform uname support
-    if let Ok(info) = uname::uname() {
-        return info.machine;
-    }
-
-    // Fallback to mapping Rust's arch constants if uname fails
-    match env::consts::ARCH {
-        "aarch64" => "armv8l".to_string(),
-        "x86_64" => "x86_64".to_string(),
-        "x86" => "i686".to_string(),
-        "arm" => "armv7l".to_string(),
-        arch => arch.to_string(),
-    }
+// Get machine architecture
+pub fn arch() -> String {
+    System::cpu_arch()
 }
 
 // ─── Distro / OS name ────────────────────────────────────────────────
@@ -218,16 +201,7 @@ pub fn storage(platform: &Platform) -> String {
         _ => "/",
     };
 
-    // Primary: nix statvfs (POSIX, no shell-out)
-    if let Ok(st) = statvfs(mount) {
-        let bsize = u64::from(st.block_size());
-        let total = u64::from(st.blocks()).saturating_mul(bsize);
-        let avail = u64::from(st.blocks_available()).saturating_mul(bsize);
-        let used = total.saturating_sub(avail);
-        return format_bytes_pair(used, total);
-    }
-
-    // Fallback: sysinfo Disks
+    // Use sysinfo Disks for storage information
     let disks = Disks::new_with_refreshed_list();
     for d in disks.list() {
         if d.mount_point() == Path::new(mount) {

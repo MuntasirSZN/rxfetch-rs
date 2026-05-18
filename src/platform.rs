@@ -1,3 +1,8 @@
+#[cfg(target_os = "linux")]
+use std::env;
+#[cfg(target_os = "linux")]
+use std::path::Path;
+
 /// Every platform we know how to handle.
 /// The `Unsupported` variant is the fallback for anything sysinfo
 /// cannot instrument.
