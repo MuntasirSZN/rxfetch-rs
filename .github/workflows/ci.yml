@@ -33,14 +33,10 @@ jobs:
           - os: macos-latest
             target: aarch64-apple-darwin
           
-          # iOS (aarch64)
+          # iOS
           - os: macos-latest
             target: aarch64-apple-ios-macabi
 
-          # iOS (x86_64)
-          - os: macos-15-intel
-            target: x86_64-apple-ios-macabi
- 
           # Windows x86_64
           - os: windows-latest
             target: x86_64-pc-windows-msvc
@@ -57,14 +53,6 @@ jobs:
           - os: ubuntu-latest
             target: armv7-linux-androideabi
           
-          # FreeBSD
-          - os: ubuntu-latest
-            target: x86_64-unknown-freebsd
-          
-          # NetBSD
-          - os: ubuntu-latest
-            target: x86_64-unknown-netbsd
-
     runs-on: ${{ matrix.os }}
     
     steps:
